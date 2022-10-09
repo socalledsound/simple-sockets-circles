@@ -2,6 +2,8 @@ const FRAMERATE = 10
 const GRID_SIZE = 20
 const Session = require('./Session');
 const Client = require('./Client');
+const sessions = new Map;
+let masterSessionId = null
 const path = require('path');
 const http = require('http');
 const express = require('express');
@@ -40,73 +42,118 @@ function createClient(conn, id = createId()){
   return new Client(conn, id);
 }
 
+function getSession(id){
+  return sessions.get(id);
+}
+
+
+function createSession(id = createId()){
+  if(sessions.has(id)){
+    throw new Error(`session ${id} already exists`);
+  }
+  const session = new Session(id)
+  masterSessionId = id
+  //console.log('creating session', session)
+  sessions.set(id, session)
+  return session
+}
+
+
+function broadcastSession(session){
+  const clients = [...session.clients];
+  console.log('CLIENTS:  ', clients)
+  if(clients && clients.length > 0){
+   // console.log('truthy')
+    clients.forEach( client => {
+     // console.log(client, 'in clients')
+      //console.log(client.emit)
+        client.conn.emit('message', {
+          type: 'session-broadcast',
+          peers: {
+              you: client.id,
+              clients: clients.map(client => {
+                  return { 
+                          id: client.id, 
+                          state: client.state, 
+                      }
+              }),
+          }
+      })
+      
+
+  })
+  }
+
+}
 
 
 io.on('connection', (connection) => {
     console.log('new connection')
     const client = createClient(connection)
-    console.log(client)
 
-    connection.on('message', msg => {
-      console.log(msg, 'on server')
-      const data = JSON.parse(msg)
+    //console.log(client)
+
+    connection.on('message', data => {
+      console.log(data, 'on server')
+      // const data = JSON.parse(msg)
+      
+      switch(data.type){
+
+        case 'get-sessions' : 
+         // console.log('logging sessions', sessions)
+          
+          return
+        case 'create-session' :
+          //   const id = createId()
+          //   const createdSession = createSession()
+          //   createdSession.join(client)
+          //   client.state = data.state
+          //   client.send({
+          //     type: 'session-created',
+          //     id: createdSession.id,
+          // });
+          return
+        case 'join-session' :   
+          const sessionExists = sessions.size > 0 ? true : false
+          //console.log(sessionExists)
+          //console.log(sessions)
+          let joinedSession
+          if(sessionExists){
+            joinedSession = getSession(masterSessionId)
+          }else{
+            joinedSession = createSession()
+          }
+          // console.log(sessionExists)          
+          //const joinedSession = getSession(data.id) || createSession(data.id);
+          //console.log(joinedSession)
+          joinedSession.join(client);
+          client.state = data.state;
+          broadcastSession(joinedSession);
+          return
+        case 'state-update' : 
+          const [prop, value] = data.state;
+          client.state[data.fragment][prop] = value;
+          client.broadcast(data);
+          return
+        default: 
+          return
+      }
+
+
     })
-  // client.emit('init', gameState)
-    //client.on('keydown', handleKeydown);
-    //startGameInterval()
+
+    connection.on('close', () => {
+      console.log('connection closed')
+      const session = client.session;
+      if(session){
+        session.leave(client);
+        if(session.clients.size === 0){
+            sessions.delete(session.id);
+        }
+      }
+      broadcastSession(session);
+    })
+
 })
 
 
-// function handleKeydown(){
-//     try {
-//         keyCode = parseInt(keyCode);
-//       } catch(e) {
-//         console.error(e);
-//         return;
-//       }
-//       const vel = getUpdatedVelocity(keyCode);
-
-//       if (vel) {
-//         gameState.player.vel = vel;
-//       }
-// }
-
-// function getUpdatedVelocity(keyCode) {
-//     switch (keyCode) {
-//       case 37: { // left
-//         return { x: -1, y: 0 };
-//       }
-//       case 38: { // down
-//         return { x: 0, y: -1 };
-//       }
-//       case 39: { // right
-//         return { x: 1, y: 0 };
-//       }
-//       case 40: { // up
-//         return { x: 0, y: 1 };
-//       }
-//     }
-//   }
-
-//   function startGameInterval() {
-//     const intervalId = setInterval(() => {
-
-//         updateGameState()
-
-//         emitGameState()
-    
-//       }, 1000 / FRAME_RATE);
-//   }
-
-//   function updateGameState(){
-//     //player.pos
-//   }
-
-
-//   function emitGameState() {
-//     // Send this event to everyone in the room.
-//     // io.sockets.in(room)
-//     //   .emit('gameState', JSON.stringify(gameState));
-//     io.emit('gameState', gameState)
-//   }
-  

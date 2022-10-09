@@ -11,4 +11,15 @@ class PlayerManager{
         this.players.add(snake)
         return snake
     }
+
+    removePlayer(snake){
+        this.instances.delete(snake);
+        //this.document.body.removeChild(tetris.el);
+    }
+
+    // sortPlayers(snakes){
+    //     snakes.forEach(snake => {
+    //         this.document.body.appendChild(tetris.el);
+    //     })
+    // }
 }
