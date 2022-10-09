@@ -1,47 +1,26 @@
 
-class Circle{
-    constructor(x, y){
-        this.pos = createVector(x, y)
-        this.r = 20
-        this.vel = createVector(1,0)
-    }
 
-    checkEdges(){
-        if(this.pos.x < 0){
-            this.pos.x = width
-        }
-        if(this.pos.x > width){
-            this.pos.x = 0
-        }
-        if(this.pos.y < this.r){
-            this.pos.y = height
-        }
-        if(this.pos.y > height){
-            this.pos.y = this.r
-        }
-    }
-
-
-    update(){
-        this.pos.add(this.vel)
-    }
-
-    render(){
-        fill(this.col)
-        ellipse(this.x, this.y, this.r)
-    }
-}
+const socket = io()
 
 let circle
+let circles = []
 
 function setup(){
     createCanvas(600, 600)
-    frameRate(10)
-    circle = new Circle(300, 200)
+    //frameRate(10)
+    // const pink = [220, 10, 200]
+    const randomCol = [random(100,255), random(100, 255), random(100, 255)]
+    circle = new Circle(300, 200, randomCol)
+    circles.push(circle)
 }
 
 function draw(){
+    background(43)
     circle.update()
     circle.checkEdges()
     circle.render()
+}
+
+function mouseMoved(){
+    circle.moveToMouse(mouseX, mouseY)
 }
