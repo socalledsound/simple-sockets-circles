@@ -1,4 +1,4 @@
-class Circle{
+class Snake{
     constructor(x, y, col){
         this.pos = createVector(x, y)
         this.r = 100
