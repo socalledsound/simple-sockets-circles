@@ -9,7 +9,7 @@ class ConnectionManager{
     init(){
         this.handleInit()
         //this.conn.emit('message', {type: 'get-sessions'})
-        this.conn.emit('message', {type: 'join-session'})
+        this.conn.emit('message', {type: 'join-session', state: localPlayer})
         this.conn.on('message', (msg) => {
             console.log('received message', msg)
             this.received(msg)
@@ -18,13 +18,14 @@ class ConnectionManager{
 
     handleInit = () => {
         console.log('connection established on client')
-        this.initSession()
+        //this.initSession()
+        // this is already happening, we have one session with a masterSessionId
         this.watchEvents()
     }
 
-    initSession(){
-        // console.log(window.location.hash)
-        // const sessionId = window.location.hash.split('#')[1];
+    // initSession(){
+    //     // console.log(window.location.hash)
+    //     // const sessionId = window.location.hash.split('#')[1];
        
         
     }
